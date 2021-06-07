@@ -119,8 +119,172 @@ vector<int> dijkstra(int startNode, int endNode = -1){
 
 }
 
+// Bellman Ford Algo
+// sssp with -ve edge 
+// TC = E*V 
 
+vector<ll> bellmanford(int start){
+    vector<ll> dist(n,INT_MAX) ; 
+    dist[start] = 0 ; 
 
+    for( int i = 0 ; i < n-1 ; i++ ){
+        for( int j = 0 ; j < n ; j++ ){
+            for( auto v : edge[j] ){
+                if( dist[v.ff] < dist[j] + v.ss ){
+                    dist[v.ff] = dist[j] + v.ss ;
+                }
+            }
+        }
+    }
+    for( int i = 0 ; i < n-1 ; i++ ){
+        for( int j = 0 ; j < n ; j++ ){
+            for( auto v : edge[j] ){
+                if( dist[v.ff] < dist[j] + v.ss ){
+                    dist[v.ff] = INT_MIN ;
+                }
+            }
+        }
+    }
+    return dist ;
+}
+
+// Floyed Warshall algo 
+// ALL pair shortest path
+vector<vector<int>> dp, nxt ; 
+
+vector<vector<int>> floyedwarshall(vector<vector<int>>& mat){
+    dp = vector<vector<int>> (n,vector<int> (n)) ;
+    nxt = vector<vector<int>> (n,vector<int> (n)) ; 
+
+    for( int i = 0 ; i < n ; i++ ){
+        for( int j = 0 ; j < n ; j++ ){
+            dp[i][j] = mat[i][j] ; 
+            if( mat[i][j] != INT_MAX ){
+                nxt[i][j] = j ; 
+            }
+        }
+    }
+
+    for( int k = 0 ; k < n ; k++ ){
+        for( int i = 0 ; i < n ; i++ ){
+            for( int j = 0 ; j < n ; j++ ){
+                if( dp[i][j] > dp[i][k] + dp[k][j] ){
+                    dp[i][j] = dp[i][k] + dp[k][j] ;
+                    nxt[i][j] = nxt[i][k] ;
+                }
+            }
+        }
+    }
+    // detect and propogate -ve cycles 
+    // for( int k = 0 ; k < n ; k++ ){
+    //     for( int i = 0 ; i < n ; i++ ){
+    //         for( int j = 0 ; j < n ; j++ ){
+    //             if( dp[i][j] > dp[i][k] + dp[k][j] ){
+    //                 dp[i][j] = INT_MIN ;
+    //                 nxt[i][j] = -1 ; 
+    //             }
+    //         }
+    //     }
+    // }
+
+    return dp ;
+}
+
+vector<int> reconstructPath(int start, int end ){
+    vector<int> path ; 
+    if( dp[start][end] == INT_MAX ) return path ; 
+    int at = start ; 
+
+    for(  ; at != end ; at = nxt[at][end] ){
+        if( at == -1 ){
+            return {-1} ;
+        }
+        path.pb(at) ;
+    }
+    if( nxt[at][end] == -1  ){
+        return {-1} ;
+    }
+    path.pb(end) ;
+    return path ; 
+}
+
+// Articulation Points and Bridges
+// in a bridge u or v is articulation point 
+// but articulation points always don't have to be on bridge they can exits without bridges
+//  articulation points must have more then 1 outgoing edges    
+int id = 0 ;
+vector<int> ids(Mxn), low(Mxn) ; 
+vector<bool> vis(Mxn), isArt(Mxn) ;
+
+int outEdgecount = 0 ;
+
+void dfs(int root, int u, int pr){
+    if(root==pr) outEdgecount++ ; 
+    vis[u] = true ; 
+    id++ ; 
+    low[u] = ids[u] = id ;
+
+    for( auto v : edge[u] ){
+        if( v.ff == pr ) continue ; 
+        if( !vis[v.ff] ){
+            dfs(root,v.ff,u) ;
+            low[u] = min(low[u], low[v.ff]) ; 
+            // Art Point found via bridges  
+            if( ids[u] < low[v.ff] ){
+                isArt[u] = true ; 
+            }
+            // Art point found via cycle
+            if( ids[u] ==low[v.ff] ){
+                isArt[u] = true ; 
+            }
+        }else{
+            low[u] = min(low[u], ids[v.ff]) ; 
+        }
+    }
+
+}
+
+vector<bool> findArt(){
+    for( int i = 0 ; i < n ; i++){
+        if( !vis[i] ){
+            outEdgecount = 0; 
+            dfs(i,i,-1) ; 
+            isArt[i] = (outEdgecount>1); 
+        }
+    }
+    return isArt ;
+}
+
+void DFS(int u, int pr, vector<int>& bridges ){
+    vis[u] = true ; 
+    id++ ; 
+    low[u] = ids[u] = id ;
+
+    for( auto v : edge[u] ){
+        if( v.ff == pr ) continue ; 
+        if( !vis[v.ff] ){
+            DFS(v.ff,u,bridges) ;
+            low[u] = min(low[u], low[v.ff]) ; 
+            if( ids[u] < low[v.ff] ){
+                bridges.pb(u) ;
+                bridges.pb(v.ff) ;
+            }
+        }else{
+            low[u] = min(low[u], ids[v.ff]) ; 
+        }
+    }
+
+}
+
+vector<int> findBridges(){
+    vector<int> bridges ;
+    for( int i = 0 ; i < n ; i++ ){
+        if( !vis[i] ){
+            DFS(i,-1,bridges) ; 
+        } 
+    }
+    return bridges ;
+}
 
 void solve(){
     cin >> n ;
