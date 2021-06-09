@@ -286,6 +286,56 @@ vector<int> findBridges(){
     return bridges ;
 }
 
+// Tarjan's Algorithm
+// for Strongly connected component 
+
+const int unvisited = -1 ;
+int ID = 0, sccCount = 0 ;
+vector<int> ids, low ;
+vector<bool> onStack ; 
+stack<int> st ;  
+
+void dfs(int at){
+    st.push(at) ; 
+    ids[at] = low[at] = ID++ ; 
+    onStack[at] = true ; 
+
+    for( auto v : edge[at] ){
+        if( ids[v.ff] == unvisited ) dfs(v.ff) ; 
+        if( onStack[v.ff] ) low[at] = min(low[at], low[v.ff]) ; 
+    }
+
+    if( low[at] == ids[at] ){
+        int node = st.top() ; 
+        onStack[node] = false ;
+        st.pop() ; 
+        while( node != at ){
+            node = st.top() ; 
+            st.pop() ; 
+
+            onStack[node] = false ;
+            low[node] = ids[at] ;
+        }
+        sccCount++ ; 
+    } 
+}
+
+vector<int> tarjanAlgo(){
+    onStack = vector<bool> (n,false) ;
+    ids = vector<int> (n,unvisited) ;
+    low = vector<int> (n,0) ;
+
+    for( int i = 0 ; i < n ; i++ ){
+        if( ids[i] == unvisited ){
+            dfs(i) ;
+        } 
+    }
+    return low ;
+}
+
+
+
+
 void solve(){
     cin >> n ;
 }
